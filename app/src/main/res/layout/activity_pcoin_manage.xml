@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".player.P_CoinManage"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Manage Coins"
+        android:textSize="24sp"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
+
+    <!-- Coin Request Section -->
+    <EditText
+        android:id="@+id/etCoinAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter coin amount"
+        android:inputType="number"
+        android:padding="20dp"
+        android:layout_marginBottom="16dp" />
+
+    <Spinner
+        android:id="@+id/spinnerRetailers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnRequestFromRetailer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Coins from Retailer"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnRequestFromAdmin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Request Coins from Admin" />
+
+    <!-- Transaction History -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Transaction History"
+        android:textSize="18sp"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp" />
+
+    <ListView
+        android:id="@+id/lvTransactionHistory"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+</LinearLayout>

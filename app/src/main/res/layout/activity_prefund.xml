@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".player.P_Refund"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Refund Request"
+        android:textSize="24sp"
+        android:gravity="center"
+        android:layout_gravity="center"
+        android:paddingBottom="16dp" />
+
+    <!-- Refund Request -->
+    <EditText
+        android:id="@+id/etRefundAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Lost Coin Amount"
+        android:inputType="numberDecimal"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnSubmitRefund"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Submit Refund Request"
+        android:padding="12dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Refund Status -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pending Refunds"
+        android:textSize="18sp"
+        android:padding="10dp"
+        android:layout_gravity="center" />
+
+    <ListView
+        android:id="@+id/lvPendingRefunds"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+</LinearLayout>

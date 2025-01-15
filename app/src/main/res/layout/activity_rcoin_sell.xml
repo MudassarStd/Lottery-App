@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical"
+    android:padding="20dp"
+    tools:context=".retailer.R_CoinSell">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Sell Coins"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:paddingBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etCoinAmount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Coin Amount"
+        android:inputType="number"
+        android:layout_marginBottom="16dp" />
+
+    <EditText
+        android:id="@+id/etReceiverId"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter Receiver ID"
+        android:inputType="text"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnSellCoins"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sell Coins"
+        android:layout_marginBottom="16dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Pending Requests"
+        android:textSize="18sp"
+        android:padding="10dp"
+        android:layout_gravity="center" />
+
+    <ListView
+        android:id="@+id/lvPendingRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+</LinearLayout>

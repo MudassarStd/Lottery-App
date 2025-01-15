@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    tools:context=".admin.A_Notifications">
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Notifications"
+        android:textSize="24sp"
+        android:gravity="center"
+        android:paddingBottom="16dp" />
+
+    <!-- Message Input -->
+    <EditText
+        android:id="@+id/etNotificationMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your message"
+        android:inputType="textMultiLine"
+        android:minLines="3"
+        android:padding="8dp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Spinner for Audience Selection -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send To:"
+        android:textSize="16sp"
+        android:layout_marginBottom="8dp" />
+
+    <Spinner
+        android:id="@+id/spinnerAudience"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Send Button -->
+    <Button
+        android:id="@+id/btnSendNotification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Send Notification"
+        android:padding="12dp" />
+</LinearLayout>

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <!-- Required permissions -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" /> <!-- Optional: For push notifications, if you plan to use Firebase Cloud Messaging -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.google.android.c2dm.permission.RECEIVE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Lottery"
+        tools:targetApi="31">
+        <activity
+            android:name=".retailer.R_play_login"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Notifications"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Signup"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Login"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Notifications"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Reports"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Dashboard"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Result"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_Refund"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_ManagePlayers"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_CoinPurchase"
+            android:exported="false" />
+        <activity
+            android:name=".retailer.R_CoinSell"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Signup"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Login"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Help"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_PlaceBet"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Dashboard"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Result"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Profile"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_Refund"
+            android:exported="false" />
+        <activity
+            android:name=".player.P_CoinManage"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_Login"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_ManagePlayers"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_Notifications"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_Reports"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_ManageBets"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_ResultDeclear"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_Refund"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_CoinManage"
+            android:exported="false" />
+        <activity
+            android:name=".admin.A_Dashboard"
+            android:exported="false" />
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/menu_dashboard"
+        android:title="Dashboard" />
+    <item
+        android:id="@+id/menu_place_bet"
+        android:title="Place a Bet" />
+    <item
+        android:id="@+id/menu_manage_coins"
+        android:title="Manage Coins" />
+    <item
+        android:id="@+id/menu_view_results"
+        android:title="View Results" />
+    <item
+        android:id="@+id/menu_refunds"
+        android:title="Refund Requests" />
+    <item
+        android:id="@+id/menu_help"
+        android:title="Help &amp; Support" />
+    <item
+        android:id="@+id/menu_logout"
+        android:title="Logout" />
+
+</menu>

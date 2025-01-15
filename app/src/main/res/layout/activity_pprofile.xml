@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".player.P_Profile"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <!-- Screen Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="My Profile"
+        android:textSize="24sp"
+        android:layout_gravity="center"
+        android:paddingBottom="16dp" />
+
+    <!-- Current Profile Information -->
+    <TextView
+        android:id="@+id/tvCurrentName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Name: [Current Name]"
+        android:padding="15dp"
+        android:textStyle="bold"
+        android:background="#9FAAE9" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
+
+    <TextView
+        android:id="@+id/tvCurrentEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Email: [Current Email]"
+        android:padding="15dp"
+        android:textStyle="bold"
+        android:background="#9FAAE9" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
+
+
+    <TextView
+        android:id="@+id/tvCurrentContact"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:text="Contact Number: [Current Contact Number]"
+        android:padding="15dp"
+        android:background="#9FAAE9" />
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@android:color/black" />
+
+    <!-- Update Profile Inputs -->
+    <EditText
+        android:id="@+id/etPlayerName"
+        android:hint="Update Name"
+        android:padding="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+
+    <EditText
+        android:id="@+id/etPlayerEmail"
+        android:hint="Update Email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:padding="20dp"
+        android:inputType="textEmailAddress" />
+
+    <EditText
+        android:id="@+id/etPlayerContact"
+        android:hint="Update Contact Number"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="20dp"
+        android:layout_marginTop="8dp"
+        android:inputType="phone" />
+
+    <!-- Save Changes Button -->
+    <Button
+        android:id="@+id/btnSaveProfile"
+        android:text="Save Changes"
+        android:padding="15dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp" />
+</LinearLayout>
