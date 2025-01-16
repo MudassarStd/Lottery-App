@@ -36,15 +36,56 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pending Requests"
+        android:text="Requests"
+        android:textStyle="bold"
         android:textSize="18sp"
         android:paddingTop="20dp"
         android:paddingBottom="8dp" />
+
+
+    <RadioGroup
+        android:id="@+id/rbGroupRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbPending"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Pending"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbApproved"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Approved"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbRejected"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rejected"/>
+
+    </RadioGroup>
 
     <ListView
         android:id="@+id/lvPendingRequests"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:divider="@android:color/darker_gray"
         android:dividerHeight="1dp" />
+
+
+    <TextView
+        android:id="@+id/tvNoRequestsFound"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="No requests found"
+        android:layout_marginTop="12dp"
+        android:layout_gravity="center_horizontal"
+        android:paddingBottom="8dp" />
+
 </LinearLayout>
