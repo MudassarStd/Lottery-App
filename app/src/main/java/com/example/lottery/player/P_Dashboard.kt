@@ -10,11 +10,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.firestore.FirebaseFirestore
 
 class P_Dashboard : AppCompatActivity() {
 
-    // UI Components
     private lateinit var tvWelcome: TextView
     private lateinit var tvCoinBalance: TextView
     private lateinit var btnPlaceBet: LinearLayout
@@ -25,10 +24,7 @@ class P_Dashboard : AppCompatActivity() {
     private lateinit var btnHelpSupport: LinearLayout
     private lateinit var btnLogout: LinearLayout
 
-    // Firebase Instances
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var firebaseDatabase: FirebaseDatabase
-    private lateinit var usersRef: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,8 +58,6 @@ class P_Dashboard : AppCompatActivity() {
 
     private fun initializeFirebase() {
         firebaseAuth = FirebaseAuth.getInstance()
-        firebaseDatabase = FirebaseDatabase.getInstance()
-        usersRef = firebaseDatabase.getReference("users")
     }
 
     private fun loadPlayerDetails() {
@@ -75,12 +69,13 @@ class P_Dashboard : AppCompatActivity() {
             return
         }
 
-        // Fetch user data from Firebase
-        usersRef.child(userId).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (snapshot.exists()) {
-                    val name = snapshot.child("name").value?.toString() ?: "Player"
-                    val coinBalance = snapshot.child("coins").value?.toString() ?: "0"
+        // Fetch user data from Firestore
+        FirebaseFirestore.getInstance().collection("users").document(userId)
+            .get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val name = document.getString("name") ?: "Player"
+                    val coinBalance = document.getLong("coins")?.toInt() ?: 0
 
                     // Update UI
                     tvWelcome.text = "Welcome, $name"
@@ -89,18 +84,16 @@ class P_Dashboard : AppCompatActivity() {
                     // Handle no user data case
                     tvWelcome.text = "Welcome, Player"
                     tvCoinBalance.text = "Coin Balance: 0"
-                    Toast.makeText(this@P_Dashboard, "User data not found.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show()
                 }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Handle Firebase error
+            .addOnFailureListener { error ->
+                // Handle Firestore error
                 Log.e("P_Dashboard", "Error loading user data: ${error.message}")
                 tvWelcome.text = "Welcome, Player"
                 tvCoinBalance.text = "Coin Balance: 0"
-                Toast.makeText(this@P_Dashboard, "Failed to load data: ${error.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to load data: ${error.message}", Toast.LENGTH_SHORT).show()
             }
-        })
     }
 
     private fun setupNavigation() {

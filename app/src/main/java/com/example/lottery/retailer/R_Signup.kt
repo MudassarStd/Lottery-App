@@ -11,6 +11,7 @@ import com.example.lottery.data.FirebaseRepository
 import com.example.lottery.utils.ValidationUtils
 
 class R_Signup : AppCompatActivity() {
+
     private lateinit var etRetailerName: EditText
     private lateinit var etRetailerEmail: EditText
     private lateinit var etRetailerPhone: EditText
@@ -39,9 +40,49 @@ class R_Signup : AppCompatActivity() {
         etRetailerAddress = findViewById(R.id.etRetailerAddress)
         btnRetailerSignup = findViewById(R.id.btnRetailerSignup)
 
+        // Set up the sign up button
         btnRetailerSignup.setOnClickListener {
-            registerRetailer()
+            if (validateInputs()) {
+                registerRetailer()
+            }
         }
+    }
+
+    private fun validateInputs(): Boolean {
+        val name = etRetailerName.text.toString().trim()
+        val email = etRetailerEmail.text.toString().trim()
+        val phone = etRetailerPhone.text.toString().trim()
+        val password = etRetailerPassword.text.toString().trim()
+        val confirmPassword = etRetailerConfirmPassword.text.toString().trim()
+        val businessName = etRetailerBusinessName.text.toString().trim()
+        val address = etRetailerAddress.text.toString().trim()
+
+        // Check if any field is empty
+        if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty() ||
+            confirmPassword.isEmpty() || businessName.isEmpty() || address.isEmpty()) {
+            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Validate email format
+        if (!ValidationUtils.isValidEmail(email)) {
+            Toast.makeText(this, "Invalid email format", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Check password length
+        if (password.length < 6) {
+            Toast.makeText(this, "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        // Ensure passwords match
+        if (password != confirmPassword) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
+            return false
+        }
+
+        return true
     }
 
     private fun registerRetailer() {
@@ -52,29 +93,6 @@ class R_Signup : AppCompatActivity() {
         val confirmPassword = etRetailerConfirmPassword.text.toString().trim()
         val businessName = etRetailerBusinessName.text.toString().trim()
         val address = etRetailerAddress.text.toString().trim()
-
-        // Validate inputs using ValidationUtils
-        if (name.isEmpty() || email.isEmpty() || phone.isEmpty() || password.isEmpty() ||
-            confirmPassword.isEmpty() || businessName.isEmpty() || address.isEmpty()
-        ) {
-            Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (!ValidationUtils.isValidEmail(email)) {
-            Toast.makeText(this, "Invalid email format", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (password.length < 6) {
-            Toast.makeText(this, "Password must be at least 6 characters long", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        if (password != confirmPassword) {
-            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show()
-            return
-        }
 
         // Register the retailer using FirebaseRepository
         firebaseRepository.signUpUser(email, password) { success, message ->

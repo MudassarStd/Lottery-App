@@ -26,8 +26,8 @@ class R_Result : AppCompatActivity() {
         setContentView(R.layout.activity_rresult)
 
         // Initialize UI components
-        btnSelectDate = findViewById(R.id.btnSelectDate)
-        tvSelectedDate = findViewById(R.id.tvSelectedDate)
+      //  btnSelectDate = findViewById(R.id.btnSelectDate)
+       // tvSelectedDate = findViewById(R.id.tvSelectedDate)
         lvResults = findViewById(R.id.lvResults)
 
         // Handle date selection

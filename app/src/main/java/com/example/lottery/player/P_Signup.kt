@@ -78,7 +78,7 @@ class P_Signup : AppCompatActivity() {
                         "name" to name,
                         "email" to email,
                         "phone" to phone,
-                        "coins" to 100,
+                        "coins" to 0,
                         "role" to "player"
                     )
 

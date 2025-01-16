@@ -34,6 +34,9 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+    buildFeatures {
+        viewBinding = true
+    }
 }
 
 dependencies {
@@ -45,6 +48,7 @@ dependencies {
     implementation(libs.androidx.constraintlayout)
     implementation(libs.androidx.foundation.android)
     implementation(libs.firebase.firestore.ktx)
+    implementation(libs.androidx.runner)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -59,6 +63,8 @@ dependencies {
 
     // Realtime Database UI (Optional for ListView/RecyclerView binding)
     implementation (libs.firebase.ui.database)
+    implementation (libs.firebase.auth)
+    implementation (libs.firebase.database)
 
     // Lifecycle Components (for ViewModel, LiveData)
     implementation (libs.androidx.lifecycle.viewmodel.ktx)

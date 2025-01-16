@@ -6,17 +6,19 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.lottery.R
+import com.example.lottery.admin.Request
+import com.example.lottery.data.model.Transaction
+import com.example.lottery.databinding.ActivityRcoinSellBinding
+import com.example.lottery.utils.Constants.ROLE_ADMIN
+import com.example.lottery.utils.Constants.ROLE_RETAILER
+import com.example.lottery.utils.Constants.STATUS_APPROVED
+import com.example.lottery.utils.Constants.STATUS_PENDING
+import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
 
 class R_CoinSell : AppCompatActivity() {
     private lateinit var etCoinAmount: EditText
@@ -25,19 +27,23 @@ class R_CoinSell : AppCompatActivity() {
     private lateinit var lvPendingRequests: ListView
 
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var firebaseDatabase: FirebaseDatabase
-    private lateinit var requestsRef: DatabaseReference
+    private lateinit var firestore: FirebaseFirestore
+
+    private val binding by lazy { ActivityRcoinSellBinding.inflate(layoutInflater) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_rcoin_sell)
+        setContentView(binding.root)
+
+        // Initialize UI components
         etCoinAmount = findViewById(R.id.etCoinAmount)
         etReceiverId = findViewById(R.id.etReceiverId)
         btnSellCoins = findViewById(R.id.btnSellCoins)
         lvPendingRequests = findViewById(R.id.lvPendingRequests)
 
+        // Initialize Firebase
         firebaseAuth = FirebaseAuth.getInstance()
-        firebaseDatabase = FirebaseDatabase.getInstance()
-        requestsRef = firebaseDatabase.getReference("coinRequests")
+        firestore = FirebaseFirestore.getInstance()
 
         loadPendingRequests()
 
@@ -62,47 +68,87 @@ class R_CoinSell : AppCompatActivity() {
     private fun loadPendingRequests() {
         val retailerId = firebaseAuth.currentUser?.uid ?: return
 
-        requestsRef.orderByChild("retailerId").equalTo(retailerId).addValueEventListener(object :
-            ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val requestsList = mutableListOf<String>()
-
-                for (request in snapshot.children) {
-                    val playerId = request.child("playerId").value.toString()
-                    val amount = request.child("coinAmount").value.toString()
-                    requestsList.add("Player ID: $playerId - Coins: $amount")
+        firestore.collection(TRANSACTIONS_COLLECTION)
+            .whereEqualTo("recipientId", retailerId)  // Filter by required user role
+            .whereEqualTo("status", STATUS_PENDING)  // Filter by status = Pending
+            .whereEqualTo("recipientType", ROLE_RETAILER)  // Filter by status = Pending
+            .get()
+            .addOnSuccessListener { snapshot ->
+                val requests = snapshot.documents.mapNotNull {
+                    it.toObject(Transaction::class.java)?.let { transaction ->
+                        Request(
+                            requestId = it.id,
+                            userId = transaction.userId,
+                            amount = transaction.amount
+                        )
+                    }
                 }
 
-                val adapter = ArrayAdapter(
-                    this@R_CoinSell,
-                    android.R.layout.simple_list_item_1,
-                    requestsList
-                )
-                lvPendingRequests.adapter = adapter
-            }
+                val requestDetails = requests.map {
+                    "User: ${it.userId}, docId: ${it.requestId} Amount: ${it.amount}"
+                }
 
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@R_CoinSell, "Failed to load requests", Toast.LENGTH_SHORT).show()
+                val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, requestDetails)
+                binding.lvPendingRequests.adapter = adapter
+
+                binding.lvPendingRequests.setOnItemClickListener { _, _, position, _ ->
+                    val selectedRequest = requests[position]
+                    showApprovalDialog(selectedRequest)
+                }
             }
-        })
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load  requests.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun sellCoins(coinAmount: Int, receiverId: String) {
         val retailerId = firebaseAuth.currentUser?.uid ?: return
 
-        val request = mapOf(
+        val request = hashMapOf(
             "retailerId" to retailerId,
             "playerId" to receiverId,
             "coinAmount" to coinAmount
         )
 
-        val newRequestRef = requestsRef.push()
-        newRequestRef.setValue(request).addOnSuccessListener {
-            Toast.makeText(this, "Coins successfully sold", Toast.LENGTH_SHORT).show()
-            etCoinAmount.text.clear()
-            etReceiverId.text.clear()
+        firestore.collection("coinRequests")
+            .add(request)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Coins successfully sold", Toast.LENGTH_SHORT).show()
+                etCoinAmount.text.clear()
+                etReceiverId.text.clear()
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to sell coins", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
+    private fun showApprovalDialog(request: Request) {
+        AlertDialog.Builder(this)
+            .setTitle("Player Request Approval")
+            .setMessage("Approve the following request?\n\nUser: ${request.userId}\nAmount: ${request.amount}")
+            .setPositiveButton("Approve") { _, _ ->
+                approveRequest(request)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+            .show()
+    }
+
+
+    private fun approveRequest(request: Request) {
+        val userRef = firestore.collection("users").document(request.userId)
+        val transactionRef = firestore.collection(TRANSACTIONS_COLLECTION).document(request.requestId)
+
+        firestore.runTransaction { transaction ->
+            val userSnapshot = transaction.get(userRef)
+            val currentCoins = userSnapshot.getLong("coins")?.toInt() ?: 0
+            transaction.update(userRef, "coins", currentCoins + request.amount)
+            transaction.update(transactionRef, "status", STATUS_APPROVED)
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Coins successfully added to ${request.userId}.", Toast.LENGTH_SHORT).show()
         }.addOnFailureListener {
-            Toast.makeText(this, "Failed to sell coins", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Failed to approve request: ${it.message}", Toast.LENGTH_SHORT).show()
         }
     }
 }

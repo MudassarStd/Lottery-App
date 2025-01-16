@@ -5,75 +5,122 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
-import android.widget.Spinner
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
-import com.example.lottery.data.FirebaseRepository
-import com.example.lottery.data.PaymentHandler
-import com.example.lottery.data.Transaction
+import com.example.lottery.data.model.Transaction
+import com.example.lottery.databinding.ActivityPcoinManageBinding
+import com.example.lottery.utils.Constants.PLAYER_COIN_REQUESTS_COLLECTION
+import com.example.lottery.utils.Constants.ROLE_ADMIN
+import com.example.lottery.utils.Constants.ROLE_PLAYER
+import com.example.lottery.utils.Constants.ROLE_RETAILER
+import com.example.lottery.utils.Constants.STATUS_PENDING
+import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
+import com.example.lottery.utils.Constants.USERS_COLLECTION
+import com.example.lottery.utils.Extensions.hide
+import com.example.lottery.utils.Extensions.show
 import com.example.lottery.utils.ValidationUtils
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 class P_CoinManage : AppCompatActivity() {
+
+    private val binding by lazy { ActivityPcoinManageBinding.inflate(layoutInflater) }
+
     private lateinit var etCoinAmount: EditText
-    private lateinit var spinnerRetailers: Spinner
     private lateinit var btnRequestFromRetailer: Button
     private lateinit var btnRequestFromAdmin: Button
     private lateinit var lvTransactionHistory: ListView
 
-    private lateinit var firebaseRepository: FirebaseRepository
-    private lateinit var paymentHandler: PaymentHandler
+    private val db = FirebaseFirestore.getInstance()
+    private val currentUser = FirebaseAuth.getInstance().currentUser
+
+    // Predefined retailer ID
+    /**
+     * fetch all users with role "Retailer" to show to user for selection of retailer
+     * */
+
+    private val predefinedRetailerId = "Retailer123" // Replace with your actual retailer ID
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pcoin_manage)
-
-        // Initialize FirebaseRepository and PaymentHandler
-        firebaseRepository = FirebaseRepository()
-        paymentHandler = PaymentHandler(this)
+        setContentView(binding.root)
 
         // Initialize UI elements
         etCoinAmount = findViewById(R.id.etCoinAmount)
-        spinnerRetailers = findViewById(R.id.spinnerRetailers)
         btnRequestFromRetailer = findViewById(R.id.btnRequestFromRetailer)
         btnRequestFromAdmin = findViewById(R.id.btnRequestFromAdmin)
         lvTransactionHistory = findViewById(R.id.lvTransactionHistory)
 
-        loadRetailers()
         loadTransactionHistory()
 
         // Set button click listeners
-        btnRequestFromRetailer.setOnClickListener { requestCoins("retailer") }
-        btnRequestFromAdmin.setOnClickListener { requestCoins("admin") }
+        btnRequestFromRetailer.setOnClickListener {
+            loadRetailers() }
+        // load registered retailers, select and request
+        btnRequestFromAdmin.setOnClickListener { requestCoins("Admin", ROLE_ADMIN) }
     }
 
     private fun loadRetailers() {
-        firebaseRepository.getUsersByRole("retailer") { retailers, error ->
-            if (retailers != null) {
-                val retailerNames = retailers.map { it["name"].toString() }
-                val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, retailerNames)
-                spinnerRetailers.adapter = adapter
-            } else {
-                Toast.makeText(this, "Failed to load retailers: $error", Toast.LENGTH_SHORT).show()
+        binding.tvHeaderAvailableRetailers.show()
+        binding.lvAvailableRetailers.show()
+
+        db.collection(USERS_COLLECTION)
+            .whereEqualTo("role", ROLE_RETAILER)
+            .get()
+            .addOnSuccessListener { result ->
+                // Create a list of pairs (displayText, docId)
+                val retailers = result.documents.map { document ->
+                    Pair(
+                        "RetailerName: ${document.getString("name")}\nEmail: ${document.getString("email")}\nBusinessName: ${document.getString("businessName")}",
+                        document.id
+                    )
+                }
+
+                if (retailers.isEmpty()) {
+                    binding.lvAvailableRetailers.hide()
+
+                }
+
+                // Extract the display text for the list adapter
+                val displayTexts = retailers.map { it.first }
+
+                val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, displayTexts)
+                binding.lvAvailableRetailers.adapter = adapter
+
+                binding.lvAvailableRetailers.setOnItemClickListener { _, _, position, _ ->
+                    val selectedRetailer = retailers[position]
+                    val docId = selectedRetailer.second // Get the document ID
+                    requestCoins(docId, ROLE_RETAILER)
+                }
             }
-        }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load retailers: ${it.message}", Toast.LENGTH_SHORT).show()
+            }
     }
+
+
 
     private fun loadTransactionHistory() {
-        val playerId = firebaseRepository.getCurrentUserId() ?: return
+        val playerId = currentUser?.uid ?: return
 
-        firebaseRepository.getTransactionHistory(playerId) { transactions, error ->
-            if (transactions != null) {
-                val transactionDetails = transactions.map { it["detail"].toString() }
+        db.collection(TRANSACTIONS_COLLECTION)
+            .whereEqualTo("userId", playerId)
+            .get()
+            .addOnSuccessListener { result ->
+                val transactionDetails = result.map {
+                    "Transaction Type: ${it.getString("transactionType")}\nAmount: ${it.getLong("amount")} coins\nTo: ${it.getString("recipientType")}\n" +
+                            "Status: ${it.getString("status")}"
+                }
                 val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, transactionDetails)
                 lvTransactionHistory.adapter = adapter
-            } else {
-                Toast.makeText(this, "Failed to load transactions: $error", Toast.LENGTH_SHORT).show()
             }
-        }
+            .addOnFailureListener { error ->
+                Toast.makeText(this, "Failed to load transactions: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 
-    private fun requestCoins(requestType: String) {
+    private fun requestCoins(recipientId: String, recipientType: String) {
         val coinAmount = etCoinAmount.text.toString().toIntOrNull()
         if (coinAmount == null || coinAmount <= 0) {
             Toast.makeText(this, "Enter a valid coin amount", Toast.LENGTH_SHORT).show()
@@ -85,45 +132,27 @@ class P_CoinManage : AppCompatActivity() {
             return
         }
 
-        val playerId = firebaseRepository.getCurrentUserId() ?: return
-        val recipientId = if (requestType == "retailer") spinnerRetailers.selectedItem?.toString() else "Admin"
+        val playerId = currentUser?.uid ?: return
 
-        // Validate recipient
-        if (recipientId.isNullOrEmpty()) {
-            Toast.makeText(this, "Please select a retailer or choose Admin.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Initiate payment
-        paymentHandler.initiatePayment(
+        val transaction = Transaction(
+            userId = playerId,
+            userRole = ROLE_PLAYER,
             recipientId = recipientId,
             amount = coinAmount,
-            paymentMethod = "Credit Card",
-            onSuccess = {
-                // Create transaction
-                val transaction = Transaction(
-                    userId = playerId,
-                    recipientId = recipientId,
-                    amount = coinAmount,
-                    type = "purchase"
-                )
-
-                // Save transaction to Firebase
-                firebaseRepository.addTransaction(transaction.toMap()) { success, error ->
-                    if (success) {
-                        // Clear input field
-                        etCoinAmount.text.clear()
-
-                        // Toast message
-                        Toast.makeText(this, "Request successfully sent to $recipientId.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(this, "Failed to send request: $error", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
-            onFailure = { errorMessage ->
-                Toast.makeText(this, "Payment failed: $errorMessage", Toast.LENGTH_SHORT).show()
-            }
+            transactionType = "request",
+            recipientType = recipientType,
         )
+
+        db.collection(TRANSACTIONS_COLLECTION)
+            .add(transaction)
+            .addOnSuccessListener {
+                etCoinAmount.text.clear()
+                Toast.makeText(this, "Request successfully sent to $recipientId.", Toast.LENGTH_SHORT).show()
+                loadTransactionHistory()
+            }
+            .addOnFailureListener { error ->
+                Toast.makeText(this, "Failed to send request: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }
+

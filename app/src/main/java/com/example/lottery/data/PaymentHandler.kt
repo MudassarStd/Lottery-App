@@ -12,6 +12,7 @@ class PaymentHandler (private val context: Context){
     private val usersRef: DatabaseReference = firebaseDatabase.getReference("users")
 
     // Function to initiate a payment
+
     fun initiatePayment(
         recipientId: String,
         amount: Int,
@@ -32,7 +33,7 @@ class PaymentHandler (private val context: Context){
         }
 
         val transactionId = transactionsRef.push().key ?: ""
-        val transaction = Transaction(
+        val transaction = TransactionPayment(
             transactionId = transactionId,
             userId = currentUserId,
             recipientId = recipientId,

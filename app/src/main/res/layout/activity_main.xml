@@ -7,17 +7,12 @@
     android:gravity="center"
     android:background="#F8F4F4">
     <ImageView
+        android:id="@+id/adlogin"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:src="@drawable/ok"
         android:layout_marginTop="-50dp"
         android:layout_marginBottom="60dp"/>
-    <Button
-        android:id="@+id/btnAdminLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Admin Login"
-        android:layout_marginBottom="16dp" />
 
     <Button
         android:id="@+id/btnPlayerLogin"
@@ -31,6 +26,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Retailer Login"
+        android:layout_marginBottom="16dp" />
+
+    <Button
+        android:id="@+id/btnAdminLogin"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Admin Login"
         android:layout_marginBottom="16dp" />
 
 </LinearLayout>

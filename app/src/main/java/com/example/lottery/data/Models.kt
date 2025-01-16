@@ -12,7 +12,7 @@ data class User(
 )
 
 // Transaction model
-data class Transaction(
+data class TransactionPayment(
     val transactionId: String = "",
     val userId: String = "", // The user initiating the transaction
     val recipientId: String = "", // The recipient of the transaction (admin, retailer, or player)
