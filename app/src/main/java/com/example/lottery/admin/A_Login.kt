@@ -32,8 +32,8 @@ class A_Login : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
 
         // Hardcoded admin credentials
-        etEmail.setText("admin@example.com")  // Replace with the desired email
-        etPassword.setText("Admin@123")      // Replace with the desired password
+        etEmail.setText("admin@mail.com")  // Replace with the desired email
+        etPassword.setText("admin")      // Replace with the desired password
 
         // Initialize helpers
         firebaseRepository = FirebaseRepository()

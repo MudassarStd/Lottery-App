@@ -14,7 +14,7 @@ class P_Result : AppCompatActivity() {
     private lateinit var lvResults: ListView
     private lateinit var tvResultHeader: TextView
 
-    private val firebaseHelper = FirebaseHelper()
+    private val firebaseHelper = FirebaseHelper() // Firebase helper class to fetch results
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
