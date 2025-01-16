@@ -2,7 +2,6 @@ package com.example.lottery.player
 
 import android.os.Bundle
 import android.os.CountDownTimer
-import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -11,21 +10,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.lottery.BetsAdapter
 import com.example.lottery.R
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.*
+import com.google.firebase.firestore.FirebaseFirestore
 
 class P_PlaceBet : AppCompatActivity() {
     private lateinit var tvCoinBalance: TextView
     private lateinit var etBetAmount: EditText
     private lateinit var btnSubmitBet: Button
     private lateinit var rvBetsList: RecyclerView
-    private lateinit var tvNoBetsMessage: TextView
     private lateinit var tvTimer: TextView
     private lateinit var gridLayout: GridLayout
 
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var database: FirebaseDatabase
-    private lateinit var userRef: DatabaseReference
-    private lateinit var betsRef: DatabaseReference
+    private lateinit var firestore: FirebaseFirestore
 
     private var selectedNumber: String? = null
     private val bets = mutableListOf<Pair<String, Int>>()
@@ -39,16 +35,13 @@ class P_PlaceBet : AppCompatActivity() {
 
         // Initialize Firebase
         firebaseAuth = FirebaseAuth.getInstance()
-        database = FirebaseDatabase.getInstance()
-        userRef = database.getReference("users").child(firebaseAuth.currentUser?.uid ?: "")
-        betsRef = database.getReference("bets")
+        firestore = FirebaseFirestore.getInstance()
 
         // Initialize UI components
         tvCoinBalance = findViewById(R.id.tvCoinBalance)
         etBetAmount = findViewById(R.id.etBetAmount)
         btnSubmitBet = findViewById(R.id.btnSubmitBet)
         rvBetsList = findViewById(R.id.rvBetsList)
-        tvNoBetsMessage = findViewById(R.id.tvNoBetsMessage)
         tvTimer = findViewById(R.id.tvTimer)
         gridLayout = findViewById(R.id.gridNumbers)
 
@@ -63,7 +56,7 @@ class P_PlaceBet : AppCompatActivity() {
         // Set up number selection grid
         setupNumberSelection()
 
-        // Start the timer initially
+        // Start the timer for a new bet round
         startNewBetRound()
 
         // Handle bet submission
@@ -73,16 +66,19 @@ class P_PlaceBet : AppCompatActivity() {
     }
 
     private fun loadCoinBalance() {
-        userRef.child("coins").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val coins = snapshot.getValue(Int::class.java) ?: 0
-                tvCoinBalance.text = "Available Coins: $coins"
+        val userId = firebaseAuth.currentUser?.uid ?: return
+        firestore.collection("users").document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val coins = document.getLong("coins")?.toInt() ?: 0
+                    tvCoinBalance.text = "Available Coins: $coins"
+                } else {
+                    Toast.makeText(this, "User data not found.", Toast.LENGTH_SHORT).show()
+                }
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@P_PlaceBet, "Failed to load coin balance", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load coin balance.", Toast.LENGTH_SHORT).show()
             }
-        })
     }
 
     private fun setupNumberSelection() {
@@ -112,21 +108,18 @@ class P_PlaceBet : AppCompatActivity() {
     }
 
     private fun startNewBetRound() {
-        val currentRoundRef = betsRef.child("currentRound")
-        currentRoundRef.get().addOnSuccessListener { snapshot ->
-            if (!snapshot.exists()) {
-                val roundId = betsRef.push().key ?: "round_${System.currentTimeMillis()}"
+        val currentRoundRef = firestore.collection("bets").document("currentRound")
+        currentRoundRef.get().addOnSuccessListener { document ->
+            if (!document.exists()) {
                 val roundData = mapOf(
-                    "betId" to roundId,
                     "startTime" to System.currentTimeMillis(),
                     "endTime" to System.currentTimeMillis() + 120000, // 2 minutes later
-                    "entries" to mapOf<String, Any>(),
-                    "result" to null
+                    "entries" to mapOf<String, Any>()
                 )
-                currentRoundRef.setValue(roundData)
+                currentRoundRef.set(roundData)
                 startCountdown(120000)
             } else {
-                val endTime = snapshot.child("endTime").getValue(Long::class.java) ?: 0L
+                val endTime = document.getLong("endTime") ?: 0L
                 startCountdown(endTime - System.currentTimeMillis())
             }
         }
@@ -157,53 +150,48 @@ class P_PlaceBet : AppCompatActivity() {
             return
         }
 
-        userRef.child("coins").get().addOnSuccessListener { snapshot ->
-            val currentCoins = snapshot.getValue(Int::class.java) ?: 0
-
-            if (currentCoins < betAmount) {
-                Toast.makeText(this, "Insufficient coins. Please top up.", Toast.LENGTH_SHORT).show()
-                return@addOnSuccessListener
-            }
-
-            val currentRoundRef = betsRef.child("currentRound")
-            val betData = mapOf(
-                "choice" to selectedNumber,
-                "amount" to betAmount
-            )
-
-            currentRoundRef.child("entries").child(userId).setValue(betData).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    Toast.makeText(this, "Bet placed successfully!", Toast.LENGTH_SHORT).show()
-                    bets.add(Pair(selectedNumber!!, betAmount))
-                    betsAdapter.notifyDataSetChanged()
-                    etBetAmount.text.clear()
-                    resetNumberSelection()
-
-                    // Deduct coins
-                    userRef.child("coins").setValue(currentCoins - betAmount)
+        firestore.collection("users").document(userId).get()
+            .addOnSuccessListener { document ->
+                val currentCoins = document.getLong("coins")?.toInt() ?: 0
+                if (currentCoins < betAmount) {
+                    Toast.makeText(this, "Insufficient coins. Please top up.", Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Failed to place bet.", Toast.LENGTH_SHORT).show()
+                    val currentRoundRef = firestore.collection("bets").document("currentRound")
+                    val betData = mapOf(
+                        "choice" to selectedNumber,
+                        "amount" to betAmount
+                    )
+                    currentRoundRef.collection("entries").document(userId).set(betData)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Bet placed successfully!", Toast.LENGTH_SHORT).show()
+                            bets.add(Pair(selectedNumber!!, betAmount))
+                            betsAdapter.notifyDataSetChanged()
+                            etBetAmount.text.clear()
+                            resetNumberSelection()
+                            firestore.collection("users").document(userId)
+                                .update("coins", currentCoins - betAmount)
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Failed to place bet.", Toast.LENGTH_SHORT).show()
+                        }
                 }
             }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Failed to load coin balance.", Toast.LENGTH_SHORT).show()
-        }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load coin balance.", Toast.LENGTH_SHORT).show()
+            }
     }
 
     private fun calculateBetResults() {
-        val currentRoundRef = betsRef.child("currentRound")
-        currentRoundRef.get().addOnSuccessListener { snapshot ->
-            if (snapshot.exists()) {
-                val entries = snapshot.child("entries").children
+        val currentRoundRef = firestore.collection("bets").document("currentRound")
+        currentRoundRef.get().addOnSuccessListener { document ->
+            if (document.exists()) {
+                val entries = document.get("entries") as? Map<String, Map<String, Any>>
                 val winningChoice = determineWinner()
 
-                val payouts = mutableMapOf<String, Int>()
-                for (entry in entries) {
-                    val userId = entry.key ?: continue
-                    val choice = entry.child("choice").getValue(String::class.java) ?: continue
-                    val amount = entry.child("amount").getValue(Int::class.java) ?: continue
-
-                    payouts[userId] = if (choice == winningChoice) amount * 2 else 0
+                val payouts = entries?.mapValues { (_, bet) ->
+                    val choice = bet["choice"] as? String
+                    val amount = bet["amount"] as? Int ?: 0
+                    if (choice == winningChoice) amount * 2 else 0
                 }
 
                 val resultData = mapOf(
@@ -211,15 +199,10 @@ class P_PlaceBet : AppCompatActivity() {
                     "result" to winningChoice,
                     "payouts" to payouts
                 )
-                currentRoundRef.updateChildren(resultData)
-
-                val roundId = snapshot.child("betId").getValue(String::class.java) ?: ""
-                betsRef.child("history").child(roundId).setValue(snapshot.value)
-
+                currentRoundRef.update(resultData)
+                Toast.makeText(this, "Round completed. Winner: $winningChoice", Toast.LENGTH_SHORT).show()
                 startNewBetRound()
             }
-        }.addOnFailureListener {
-            Toast.makeText(this, "Failed to calculate results.", Toast.LENGTH_SHORT).show()
         }
     }
 
