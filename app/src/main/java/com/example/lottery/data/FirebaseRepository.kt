@@ -1,6 +1,9 @@
 package com.example.lottery.data
 
 import android.util.Log
+import android.widget.Toast
+import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
+import com.example.lottery.utils.Constants.USERS_COLLECTION
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -113,6 +116,22 @@ class FirebaseRepository {
 
 
 
+    fun loadCoinBalance(callback: (Boolean, String?) -> Unit) {
+        val userId = firebaseAuth.currentUser?.uid ?: return
+        firestore.collection(USERS_COLLECTION).document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    val coins = document.getLong("coins")?.toInt() ?: 0
+                    callback(true, coins.toString())
+                } else {
+                    callback(false, "No found")
+                }
+            }
+            .addOnFailureListener {
+                callback(false, "Failed")
+            }
+    }
+
 
 
     // Get all users of a specific role
@@ -145,8 +164,8 @@ class FirebaseRepository {
     }
 
     // Add transaction details
-    fun addTransaction(transaction: Map<String, Any>, callback: (Boolean, String?) -> Unit) {
-        firestore.collection("transactions").add(transaction)
+    fun addTransaction(transaction: com.example.lottery.data.model.Transaction, callback: (Boolean, String?) -> Unit) {
+        firestore.collection(TRANSACTIONS_COLLECTION).add(transaction)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     callback(true, null)
@@ -155,6 +174,22 @@ class FirebaseRepository {
                 }
             }
     }
+
+    fun getTransactionHistoryByUID(userId: String, callback: (Boolean, List<com.example.lottery.data.model.Transaction>?, String?) -> Unit, status: String) {
+        firestore.collection(TRANSACTIONS_COLLECTION)
+            .whereEqualTo("userId", userId)
+            .whereEqualTo("status", status)
+            .get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val transactions = task.result?.toObjects(com.example.lottery.data.model.Transaction::class.java)
+                    callback(true, transactions, null)
+                } else {
+                    callback(false, null, task.exception?.localizedMessage)
+                }
+            }
+    }
+
 
     // Retrieve results from Firestore
     fun getResults(callback: (List<Map<String, Any>>?, String?) -> Unit) {

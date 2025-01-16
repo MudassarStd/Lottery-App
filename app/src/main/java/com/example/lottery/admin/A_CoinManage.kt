@@ -11,6 +11,7 @@ import com.example.lottery.data.model.Transaction
 import com.example.lottery.databinding.ActivityAcoinManageBinding
 import com.example.lottery.utils.Constants.ROLE_ADMIN
 import com.example.lottery.utils.Constants.ROLE_PLAYER
+import com.example.lottery.utils.Constants.ROLE_RETAILER
 import com.example.lottery.utils.Constants.STATUS_APPROVED
 import com.example.lottery.utils.Constants.STATUS_PENDING
 import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
@@ -39,7 +40,7 @@ class A_CoinManage : AppCompatActivity() {
         lvRetailerRequests = findViewById(R.id.lvRetailerRequests)
         lvPlayerRequests = findViewById(R.id.lvPlayerRequests)
 
-//        loadRequests(lvRetailerRequests, "retailerRequests", "Retailer")
+        loadRequests(lvRetailerRequests, ROLE_RETAILER)
         loadRequests(lvPlayerRequests, ROLE_PLAYER)
     }
 
@@ -61,7 +62,7 @@ class A_CoinManage : AppCompatActivity() {
                 }
 
                 val requestDetails = requests.map {
-                    "User: ${it.userId}, docId: ${it.requestId} Amount: ${it.amount}"
+                    "User: ${it.userId}\ndocId: ${it.requestId}\nAmount: ${it.amount}"
                 }
 
                 val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, requestDetails)

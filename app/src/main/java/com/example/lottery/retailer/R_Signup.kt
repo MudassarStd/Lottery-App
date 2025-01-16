@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
 import com.example.lottery.data.FirebaseRepository
+import com.example.lottery.utils.Constants.ROLE_RETAILER
 import com.example.lottery.utils.ValidationUtils
 
 class R_Signup : AppCompatActivity() {
@@ -105,7 +106,8 @@ class R_Signup : AppCompatActivity() {
                         "phone" to phone,
                         "businessName" to businessName,
                         "address" to address,
-                        "role" to "retailer"
+                        "role" to ROLE_RETAILER,
+                        "coins" to 0
                     )
 
                     // Save retailer data in the database

@@ -32,7 +32,7 @@ class A_Login : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
 
         // Hardcoded admin credentials
-        etEmail.setText("admin@mail.com")  // Replace with the desired email
+        etEmail.setText("admin@gmail.com")  // Replace with the desired email
         etPassword.setText("123456")      // Replace with the desired password
 
         // Initialize helpers
