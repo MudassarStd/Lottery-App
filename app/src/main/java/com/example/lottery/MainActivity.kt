@@ -26,16 +26,16 @@ class MainActivity : AppCompatActivity() {
 
 
         // Navigate to Admin Login after 3 clicks
-        binding.btnAdminLogin.setOnClickListener {
-//            adminClickCount++ // Increment the click counter
+        binding.adlogin.setOnClickListener {
+          adminClickCount++ // Increment the click counter
 
-//            if (adminClickCount == 3) {
+            if (adminClickCount == 3) {
                 val intent = Intent(this, A_Login::class.java)
                 startActivity(intent)
-//            } else {
-//                // Optionally, you can show a message or toast indicating more clicks are needed
-//                // abhi na lgana : Toast.makeText(this, "Click ${3 - adminClickCount} more times to access Admin Login", Toast.LENGTH_SHORT).show()
-//            }
+           } else {
+               // Optionally, you can show a message or toast indicating more clicks are needed
+               // abhi na lgana : Toast.makeText(this, "Click ${3 - adminClickCount} more times to access Admin Login", Toast.LENGTH_SHORT).show()
+            }
         }
 
         // Navigate to Player Login
