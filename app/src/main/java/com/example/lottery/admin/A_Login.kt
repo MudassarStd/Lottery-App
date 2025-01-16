@@ -33,7 +33,7 @@ class A_Login : AppCompatActivity() {
 
         // Hardcoded admin credentials
         etEmail.setText("admin@mail.com")  // Replace with the desired email
-        etPassword.setText("admin")      // Replace with the desired password
+        etPassword.setText("123456")      // Replace with the desired password
 
         // Initialize helpers
         firebaseRepository = FirebaseRepository()

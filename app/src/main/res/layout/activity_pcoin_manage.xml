@@ -34,6 +34,33 @@
         android:text="Request Coins from Retailer"
         android:layout_marginBottom="8dp" />
 
+    <TextView
+        android:id="@+id/tvHeaderAvailableRetailers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Available Retailers"
+        android:visibility="gone"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:layout_marginTop="24dp"
+        android:layout_marginBottom="8dp" />
+    <TextView
+        android:id="@+id/tvNoRegisterdRetailerFound"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="No registered retailer found"
+        android:visibility="gone"
+        android:layout_gravity="center_horizontal"
+        android:layout_marginVertical="8dp"/>
+
+    <ListView
+        android:id="@+id/lvAvailableRetailers"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:divider="@android:color/darker_gray"
+        android:dividerHeight="1dp" />
+
     <Button
         android:id="@+id/btnRequestFromAdmin"
         android:layout_width="match_parent"
