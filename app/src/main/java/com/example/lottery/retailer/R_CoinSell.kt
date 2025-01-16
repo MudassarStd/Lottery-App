@@ -6,8 +6,17 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.ListView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
+import com.example.lottery.admin.Request
+import com.example.lottery.data.model.Transaction
+import com.example.lottery.databinding.ActivityRcoinSellBinding
+import com.example.lottery.utils.Constants.ROLE_ADMIN
+import com.example.lottery.utils.Constants.ROLE_RETAILER
+import com.example.lottery.utils.Constants.STATUS_APPROVED
+import com.example.lottery.utils.Constants.STATUS_PENDING
+import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
@@ -20,9 +29,11 @@ class R_CoinSell : AppCompatActivity() {
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var firestore: FirebaseFirestore
 
+    private val binding by lazy { ActivityRcoinSellBinding.inflate(layoutInflater) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_rcoin_sell)
+        setContentView(binding.root)
 
         // Initialize UI components
         etCoinAmount = findViewById(R.id.etCoinAmount)
@@ -57,27 +68,36 @@ class R_CoinSell : AppCompatActivity() {
     private fun loadPendingRequests() {
         val retailerId = firebaseAuth.currentUser?.uid ?: return
 
-        firestore.collection("coinRequests")
-            .whereEqualTo("retailerId", retailerId)
+        firestore.collection(TRANSACTIONS_COLLECTION)
+            .whereEqualTo("recipientId", retailerId)  // Filter by required user role
+            .whereEqualTo("status", STATUS_PENDING)  // Filter by status = Pending
+            .whereEqualTo("recipientType", ROLE_RETAILER)  // Filter by status = Pending
             .get()
             .addOnSuccessListener { snapshot ->
-                val requestsList = mutableListOf<String>()
-
-                for (document in snapshot) {
-                    val playerId = document.getString("playerId") ?: "Unknown"
-                    val amount = document.getLong("coinAmount") ?: 0
-                    requestsList.add("Player ID: $playerId - Coins: $amount")
+                val requests = snapshot.documents.mapNotNull {
+                    it.toObject(Transaction::class.java)?.let { transaction ->
+                        Request(
+                            requestId = it.id,
+                            userId = transaction.userId,
+                            amount = transaction.amount
+                        )
+                    }
                 }
 
-                val adapter = ArrayAdapter(
-                    this@R_CoinSell,
-                    android.R.layout.simple_list_item_1,
-                    requestsList
-                )
-                lvPendingRequests.adapter = adapter
+                val requestDetails = requests.map {
+                    "User: ${it.userId}, docId: ${it.requestId} Amount: ${it.amount}"
+                }
+
+                val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, requestDetails)
+                binding.lvPendingRequests.adapter = adapter
+
+                binding.lvPendingRequests.setOnItemClickListener { _, _, position, _ ->
+                    val selectedRequest = requests[position]
+                    showApprovalDialog(selectedRequest)
+                }
             }
             .addOnFailureListener {
-                Toast.makeText(this@R_CoinSell, "Failed to load requests", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Failed to load  requests.", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -100,5 +120,35 @@ class R_CoinSell : AppCompatActivity() {
             .addOnFailureListener {
                 Toast.makeText(this, "Failed to sell coins", Toast.LENGTH_SHORT).show()
             }
+    }
+
+
+    private fun showApprovalDialog(request: Request) {
+        AlertDialog.Builder(this)
+            .setTitle("Player Request Approval")
+            .setMessage("Approve the following request?\n\nUser: ${request.userId}\nAmount: ${request.amount}")
+            .setPositiveButton("Approve") { _, _ ->
+                approveRequest(request)
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+            .show()
+    }
+
+
+    private fun approveRequest(request: Request) {
+        val userRef = firestore.collection("users").document(request.userId)
+        val transactionRef = firestore.collection(TRANSACTIONS_COLLECTION).document(request.requestId)
+
+        firestore.runTransaction { transaction ->
+            val userSnapshot = transaction.get(userRef)
+            val currentCoins = userSnapshot.getLong("coins")?.toInt() ?: 0
+            transaction.update(userRef, "coins", currentCoins + request.amount)
+            transaction.update(transactionRef, "status", STATUS_APPROVED)
+        }.addOnSuccessListener {
+            Toast.makeText(this, "Coins successfully added to ${request.userId}.", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener {
+            Toast.makeText(this, "Failed to approve request: ${it.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 }
