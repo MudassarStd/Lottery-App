@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
 import com.example.lottery.data.FirebaseRepository
 import com.example.lottery.data.SharedPreferencesHelper
+import com.example.lottery.player.P_PlaceBet
 import com.example.lottery.utils.ValidationUtils
 
 class R_play_login : AppCompatActivity() {
@@ -69,7 +70,7 @@ class R_play_login : AppCompatActivity() {
     }
 
     private fun navigateToDashboard() {
-        val intent = Intent(this, R_Dashboard::class.java)
+        val intent = Intent(this, P_PlaceBet::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
         finish()
