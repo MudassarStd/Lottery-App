@@ -22,13 +22,32 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="00:00"
+        android:visibility="gone"
         android:textSize="18sp"
         android:layout_marginStart="180dp"
+        android:layout_centerInParent="true"/>
+
+    <TextView
+        android:id="@+id/tvCurrentSlot"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Morning Slot"
+        android:layout_gravity="center"
+        android:textSize="18sp"
+        android:layout_centerInParent="true"/>
+    <TextView
+        android:id="@+id/tvBettingStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Open for betting"
+        android:textSize="18sp"
+        android:layout_gravity="center"
         android:layout_centerInParent="true"/>
     <Spinner
         android:id="@+id/slotSpinner"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:visibility="gone"
         android:layout_marginBottom="16dp"/>
 
 
@@ -37,6 +56,7 @@
         android:id="@+id/tvCoinBalance"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:text="Available Coins: 0"
         android:textSize="18sp"
         android:gravity="center"
@@ -52,8 +72,8 @@
             android:id="@+id/gridNumbers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:columnCount="06"
-            android:rowCount="17"
+            android:columnCount="05"
+            android:rowCount="20"
             android:padding="8dp">
 
             <!-- Numbers 00 to 99 -->
@@ -1308,5 +1328,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:layout_marginTop="16dp" />
+
+
+    <ListView
+        android:id="@+id/lvBetsList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:divider="@color/background_color"
+        android:dividerHeight="1dp"
         android:layout_marginTop="16dp" />
 </LinearLayout>

@@ -7,9 +7,11 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -17,12 +19,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.lottery.BetsAdapter
 import com.example.lottery.R
+import com.example.lottery.databinding.ActivityPplaceBetBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalTime
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.O)
 class P_PlaceBet : AppCompatActivity() {
 
+    private val binding by lazy { ActivityPplaceBetBinding.inflate(layoutInflater) }
     // UI components
     private lateinit var tvCoinBalance: TextView
     private lateinit var etBetAmount: EditText
@@ -43,7 +49,7 @@ class P_PlaceBet : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pplace_bet)
+        setContentView(binding.root)
 
         // Initialize Firebase
         firebaseAuth = FirebaseAuth.getInstance()
@@ -251,6 +257,28 @@ class P_PlaceBet : AppCompatActivity() {
     }
 
 
+
+    fun getTimeSlot(currentTime: LocalTime = LocalTime.now()): TimeSlot? {
+        return when {
+            // 9 AM to 12 PM or 12 PM to 1 PM → SLOT_1 or RESULT_1
+            currentTime.isAfter(LocalTime.of(8, 59)) && currentTime.isBefore(LocalTime.of(12, 0)) -> TimeSlot.SLOT_1
+            currentTime.isAfter(LocalTime.of(11, 59)) && currentTime.isBefore(LocalTime.of(13, 0)) -> TimeSlot.RESULT_1
+
+            // 1 PM to 3 PM or 3 PM to 4 PM → SLOT_2 or RESULT_2
+            currentTime.isAfter(LocalTime.of(12, 59)) && currentTime.isBefore(LocalTime.of(15, 0)) -> TimeSlot.SLOT_2
+            currentTime.isAfter(LocalTime.of(14, 59)) && currentTime.isBefore(LocalTime.of(16, 0)) -> TimeSlot.RESULT_2
+
+            // 4 PM to 5 PM or 5 PM to 6 PM → SLOT_3 or RESULT_3
+            currentTime.isAfter(LocalTime.of(15, 59)) && currentTime.isBefore(LocalTime.of(17, 0)) -> TimeSlot.SLOT_3
+            currentTime.isAfter(LocalTime.of(16, 59)) && currentTime.isBefore(LocalTime.of(18, 0)) -> TimeSlot.RESULT_3
+
+            else -> null
+        }
+    }
+
+
+
+
     private fun scheduleHourlyNotifications() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
         val notificationIntent = Intent(this, NotificationReceiver::class.java)
@@ -301,4 +329,10 @@ class NotificationReceiver : BroadcastReceiver() {
 
         notificationManager.notify(1, notification)
     }
+}
+
+enum class TimeSlot {
+    SLOT_1, RESULT_1,
+    SLOT_2, RESULT_2,
+    SLOT_3, RESULT_3
 }
