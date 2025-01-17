@@ -17,6 +17,59 @@
         android:gravity="center"
         android:paddingBottom="16dp" />
 
+    <TextView
+    android:id="@+id/tvDeclareResults"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    />
+    <!-- Title -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Active Bets"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:layout_marginVertical="8dp"
+        android:gravity="center" />
+
+    <RadioGroup
+        android:id="@+id/rbGroupRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbMorning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Morning"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbNoon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Afternoon"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbEvening"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Evening"/>
+
+    </RadioGroup>
+
+    <TextView
+        android:id="@+id/tvNoActiveBets"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:text="No active bets found for this slot"
+        android:layout_marginVertical="8dp"
+        android:gravity="center" />
+
     <!-- Bets List -->
     <ListView
         android:id="@+id/lvBets"
@@ -31,19 +84,20 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+        android:layout_marginTop="16dp"
         android:gravity="center">
 
         <Button
             android:id="@+id/btnDeclareResult"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Declare Result"
-            android:layout_marginEnd="16dp" />
+            android:enabled="false"
+            android:text="Declare Morning Results" />
 
-        <Button
-            android:id="@+id/btnResolveIssues"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Resolve Issues" />
+<!--        <Button-->
+<!--            android:id="@+id/btnResolveIssues"-->
+<!--            android:layout_width="wrap_content"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:text="Resolve Issues" />-->
     </LinearLayout>
 </LinearLayout>

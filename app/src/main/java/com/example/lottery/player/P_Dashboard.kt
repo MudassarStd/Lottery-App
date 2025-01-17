@@ -128,4 +128,17 @@ class P_Dashboard : AppCompatActivity() {
             finish()
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        loadPlayerDetails()
+    }
 }
+
+
+
+/**
+ *
+ * Just load player's coins on resume, instead of loading whole profile
+ *
+ * **/

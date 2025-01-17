@@ -28,7 +28,7 @@
             android:id="@+id/tvCoinBalance"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Coin Balance: 0"
+            android:text="Coin Balance: loading..."
             android:textSize="18sp"
             android:gravity="center"
             android:padding="8dp"

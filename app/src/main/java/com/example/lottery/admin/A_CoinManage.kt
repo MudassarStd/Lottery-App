@@ -14,7 +14,7 @@ import com.example.lottery.utils.Constants.ROLE_PLAYER
 import com.example.lottery.utils.Constants.ROLE_RETAILER
 import com.example.lottery.utils.Constants.STATUS_APPROVED
 import com.example.lottery.utils.Constants.STATUS_PENDING
-import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
+import com.example.lottery.utils.Constants.TRANSACTIONS_PATH
 import com.google.firebase.firestore.FirebaseFirestore
 
 data class Request(
@@ -45,7 +45,7 @@ class A_CoinManage : AppCompatActivity() {
     }
 
     private fun loadRequests(listView: ListView, userType: String) {
-        firestore.collection(TRANSACTIONS_COLLECTION)
+        firestore.collection(TRANSACTIONS_PATH)
             .whereEqualTo("userRole", userType)  // Filter by required user role
             .whereEqualTo("status", STATUS_PENDING)  // Filter by status = Pending
             .whereEqualTo("recipientType", ROLE_ADMIN)  // Filter by status = Pending
@@ -121,7 +121,7 @@ class A_CoinManage : AppCompatActivity() {
 
     private fun approveRequest(request: Request) {
         val userRef = firestore.collection("users").document(request.userId)
-        val transactionRef = firestore.collection(TRANSACTIONS_COLLECTION).document(request.requestId)
+        val transactionRef = firestore.collection(TRANSACTIONS_PATH).document(request.requestId)
 
         firestore.runTransaction { transaction ->
             val userSnapshot = transaction.get(userRef)

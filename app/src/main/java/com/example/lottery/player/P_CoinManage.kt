@@ -15,8 +15,8 @@ import com.example.lottery.utils.Constants.ROLE_ADMIN
 import com.example.lottery.utils.Constants.ROLE_PLAYER
 import com.example.lottery.utils.Constants.ROLE_RETAILER
 import com.example.lottery.utils.Constants.STATUS_PENDING
-import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
-import com.example.lottery.utils.Constants.USERS_COLLECTION
+import com.example.lottery.utils.Constants.TRANSACTIONS_PATH
+import com.example.lottery.utils.Constants.USERS_PATH
 import com.example.lottery.utils.Extensions.hide
 import com.example.lottery.utils.Extensions.show
 import com.example.lottery.utils.ValidationUtils
@@ -65,7 +65,7 @@ class P_CoinManage : AppCompatActivity() {
         binding.tvHeaderAvailableRetailers.show()
         binding.lvAvailableRetailers.show()
 
-        db.collection(USERS_COLLECTION)
+        db.collection(USERS_PATH)
             .whereEqualTo("role", ROLE_RETAILER)
             .get()
             .addOnSuccessListener { result ->
@@ -104,7 +104,7 @@ class P_CoinManage : AppCompatActivity() {
     private fun loadTransactionHistory() {
         val playerId = currentUser?.uid ?: return
 
-        db.collection(TRANSACTIONS_COLLECTION)
+        db.collection(TRANSACTIONS_PATH)
             .whereEqualTo("userId", playerId)
             .get()
             .addOnSuccessListener { result ->
@@ -143,7 +143,7 @@ class P_CoinManage : AppCompatActivity() {
             recipientType = recipientType,
         )
 
-        db.collection(TRANSACTIONS_COLLECTION)
+        db.collection(TRANSACTIONS_PATH)
             .add(transaction)
             .addOnSuccessListener {
                 etCoinAmount.text.clear()

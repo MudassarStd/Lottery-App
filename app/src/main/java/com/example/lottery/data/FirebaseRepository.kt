@@ -2,8 +2,9 @@ package com.example.lottery.data
 
 import android.util.Log
 import android.widget.Toast
-import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
-import com.example.lottery.utils.Constants.USERS_COLLECTION
+import com.example.lottery.utils.Constants.ACTIVE_BETS_PATH
+import com.example.lottery.utils.Constants.TRANSACTIONS_PATH
+import com.example.lottery.utils.Constants.USERS_PATH
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -118,7 +119,7 @@ class FirebaseRepository {
 
     fun loadCoinBalance(callback: (Boolean, String?) -> Unit) {
         val userId = firebaseAuth.currentUser?.uid ?: return
-        firestore.collection(USERS_COLLECTION).document(userId).get()
+        firestore.collection(USERS_PATH).document(userId).get()
             .addOnSuccessListener { document ->
                 if (document.exists()) {
                     val coins = document.getLong("coins")?.toInt() ?: 0
@@ -163,9 +164,22 @@ class FirebaseRepository {
             }
     }
 
+    fun getBets(slot: String ,callback: (Boolean, List<com.example.lottery.data.model.Bet>?, String?) -> Unit) {
+        firestore.collection(ACTIVE_BETS_PATH)
+            .whereEqualTo("slot", slot)
+            .get()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    val bets = task.result?.toObjects(com.example.lottery.data.model.Bet::class.java)
+                    callback(true, bets, null)
+                } else {
+                    callback(false, null, task.exception?.localizedMessage)
+                }
+            }
+    }
     // Add transaction details
     fun addTransaction(transaction: com.example.lottery.data.model.Transaction, callback: (Boolean, String?) -> Unit) {
-        firestore.collection(TRANSACTIONS_COLLECTION).add(transaction)
+        firestore.collection(TRANSACTIONS_PATH).add(transaction)
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
                     callback(true, null)
@@ -176,7 +190,7 @@ class FirebaseRepository {
     }
 
     fun getTransactionHistoryByUID(userId: String, callback: (Boolean, List<com.example.lottery.data.model.Transaction>?, String?) -> Unit, status: String) {
-        firestore.collection(TRANSACTIONS_COLLECTION)
+        firestore.collection(TRANSACTIONS_PATH)
             .whereEqualTo("userId", userId)
             .whereEqualTo("status", status)
             .get()

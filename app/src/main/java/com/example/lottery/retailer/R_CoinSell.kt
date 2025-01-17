@@ -17,8 +17,8 @@ import com.example.lottery.utils.Constants.ROLE_ADMIN
 import com.example.lottery.utils.Constants.ROLE_RETAILER
 import com.example.lottery.utils.Constants.STATUS_APPROVED
 import com.example.lottery.utils.Constants.STATUS_PENDING
-import com.example.lottery.utils.Constants.TRANSACTIONS_COLLECTION
-import com.example.lottery.utils.Constants.USERS_COLLECTION
+import com.example.lottery.utils.Constants.TRANSACTIONS_PATH
+import com.example.lottery.utils.Constants.USERS_PATH
 import com.example.lottery.utils.Extensions.hide
 import com.example.lottery.utils.Extensions.show
 import com.google.firebase.auth.FirebaseAuth
@@ -85,7 +85,7 @@ class R_CoinSell : AppCompatActivity() {
     private fun loadPendingRequests() {
         val retailerId = firebaseAuth.currentUser?.uid ?: return
 
-        firestore.collection(TRANSACTIONS_COLLECTION)
+        firestore.collection(TRANSACTIONS_PATH)
             .whereEqualTo("recipientId", retailerId)  // Filter by required user role
             .whereEqualTo("status", STATUS_PENDING)  // Filter by status = Pending
             .whereEqualTo("recipientType", ROLE_RETAILER)  // Filter by status = Pending
@@ -172,12 +172,12 @@ class R_CoinSell : AppCompatActivity() {
 
 
     private fun approveRequest(request: Request) {
-        val userRef = firestore.collection(USERS_COLLECTION).document(request.userId)
+        val userRef = firestore.collection(USERS_PATH).document(request.userId)
         val retailerRef =
             firebaseRepository.getCurrentUserId()
-                ?.let { firestore.collection(USERS_COLLECTION).document(it) }
+                ?.let { firestore.collection(USERS_PATH).document(it) }
 
-        val transactionRef = firestore.collection(TRANSACTIONS_COLLECTION).document(request.requestId)
+        val transactionRef = firestore.collection(TRANSACTIONS_PATH).document(request.requestId)
 
         val newAmount = binding.tvAvailableCoins.text.toString().toInt() - request.amount
 

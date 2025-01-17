@@ -2,14 +2,18 @@ package com.example.lottery.utils
 
 object Constants {
     // Firebase paths
-    const val USERS_COLLECTION = "users"
-    const val TRANSACTIONS_COLLECTION = "transactions"
+    const val USERS_PATH = "users"
+    const val TRANSACTIONS_PATH = "transactions"
     const val PURCHASE_REQUESTS_PATH = "purchaseRequests"
     const val PLAYER_COIN_REQUESTS_COLLECTION = "playerRequests"
     const val RETAILER_REQUESTS_PATH = "retailerRequests"
     const val RESULTS_PATH = "results"
     const val NOTIFICATIONS_PATH = "notifications"
     const val REFUNDS_PATH = "refunds"
+    const val ACTIVE_BETS_PATH = "activeBets"
+    const val DECLARED_BETS_PATH = "declaredBets"
+    const val USER_BET_HISTORY_PATH = "userBetHistory"
+
 
     // User roles
     const val ROLE_ADMIN = "admin"
