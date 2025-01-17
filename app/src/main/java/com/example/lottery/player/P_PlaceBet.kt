@@ -7,10 +7,11 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.util.Log
+import android.view.View
 import android.widget.*
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -18,12 +19,16 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.lottery.BetsAdapter
 import com.example.lottery.R
+import com.example.lottery.databinding.ActivityPplaceBetBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import java.time.LocalTime
 import java.util.*
 
+@RequiresApi(Build.VERSION_CODES.O)
 class P_PlaceBet : AppCompatActivity() {
 
+    private val binding by lazy { ActivityPplaceBetBinding.inflate(layoutInflater) }
     // UI components
     private lateinit var tvCoinBalance: TextView
     private lateinit var etBetAmount: EditText
@@ -31,6 +36,7 @@ class P_PlaceBet : AppCompatActivity() {
     private lateinit var rvBetsList: RecyclerView
     private lateinit var tvTimer: TextView
     private lateinit var gridLayout: GridLayout
+    private lateinit var slotSpinner: Spinner
 
     // Firebase
     private lateinit var firebaseAuth: FirebaseAuth
@@ -39,13 +45,11 @@ class P_PlaceBet : AppCompatActivity() {
     private var selectedNumber: String? = null
     private val bets = mutableListOf<Pair<String, Int>>()
     private lateinit var betsAdapter: BetsAdapter
-
-    private var countdownTimer: CountDownTimer? = null
-    private val roundTimeInMillis = 60 * 60 * 1000L // 1 hour
+    private var selectedSlot: String = "morning"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_pplace_bet)
+        setContentView(binding.root)
 
         // Initialize Firebase
         firebaseAuth = FirebaseAuth.getInstance()
@@ -58,23 +62,14 @@ class P_PlaceBet : AppCompatActivity() {
         rvBetsList = findViewById(R.id.rvBetsList)
         tvTimer = findViewById(R.id.tvTimer)
         gridLayout = findViewById(R.id.gridNumbers)
+        slotSpinner = findViewById(R.id.slotSpinner)
 
-        // Set up RecyclerView
-        betsAdapter = BetsAdapter(bets)
-        rvBetsList.layoutManager = LinearLayoutManager(this)
-        rvBetsList.adapter = betsAdapter
-
-        // Load user's coin balance
+        // Setup UI and functionality
+        setupSlotSpinner()
         loadCoinBalance()
-
-        // Set up number selection grid
         setupNumberSelection()
-
-        // Start hourly notifications
+        setupRecyclerView()
         scheduleHourlyNotifications()
-
-        // Start betting round
-        startNewBetRound()
 
         // Handle bet submission
         btnSubmitBet.setOnClickListener {
@@ -124,26 +119,48 @@ class P_PlaceBet : AppCompatActivity() {
         selectedNumber = null
     }
 
-    private fun startNewBetRound() {
-        val currentRoundRef = firestore.collection("bets").document("currentRound")
-        currentRoundRef.addSnapshotListener { document, e ->
-            if (e != null) {
-                Toast.makeText(this, "Error fetching bets: ${e.message}", Toast.LENGTH_SHORT).show()
-                return@addSnapshotListener
+    private fun setupSlotSpinner() {
+        val slots = listOf("morning", "afternoon", "evening")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, slots)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        slotSpinner.adapter = adapter
+
+        slotSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                selectedSlot = slots[position]
+                loadBetsForSlot()
             }
 
-            if (document != null && document.exists()) {
-                val entries = document.get("entries") as? Map<String, Map<String, Any>> ?: return@addSnapshotListener
-                bets.clear()
-                entries.forEach { (_, bet) ->
-                    val choice = bet["choice"] as? String ?: return@forEach
-                    val amount = (bet["amount"] as? Long)?.toInt() ?: return@forEach
-                    bets.add(Pair(choice, amount))
-                }
-                betsAdapter.notifyDataSetChanged()
-            }
+            override fun onNothingSelected(parent: AdapterView<*>) {}
         }
     }
+
+    private fun setupRecyclerView() {
+        betsAdapter = BetsAdapter(bets)
+        rvBetsList.layoutManager = LinearLayoutManager(this)
+        rvBetsList.adapter = betsAdapter
+    }
+
+    private fun loadBetsForSlot() {
+        firestore.collection("bets").document(selectedSlot).get()
+            .addOnSuccessListener { document ->
+                bets.clear() // Clear old bets
+                if (document.exists()) {
+                    val entries = document.get("entries") as? Map<String, Map<String, Any>> ?: emptyMap()
+                    for ((_, bet) in entries) {
+                        val choice = bet["choice"] as? String ?: continue
+                        val amount = (bet["amount"] as? Long)?.toInt() ?: continue
+                        bets.add(Pair(choice, amount))
+                    }
+                    betsAdapter.notifyDataSetChanged()
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Failed to load bets for $selectedSlot.", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+
 
     private fun submitBet() {
         val betAmountText = etBetAmount.text.toString()
@@ -165,6 +182,49 @@ class P_PlaceBet : AppCompatActivity() {
             return
         }
 
+        firestore.collection("bets").document(selectedSlot).get()
+            .addOnSuccessListener { document ->
+                val betEntry = mapOf(
+                    "choice" to selectedNumber!!,
+                    "amount" to betAmount,
+                    "timestamp" to System.currentTimeMillis()
+                )
+
+                // Check if document exists
+                if (document.exists()) {
+                    firestore.collection("bets").document(selectedSlot)
+                        .update("entries.$userId", betEntry)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Bet placed successfully!", Toast.LENGTH_SHORT).show()
+                            bets.add(Pair(selectedNumber!!, betAmount))
+                            betsAdapter.notifyDataSetChanged()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Failed to place bet.", Toast.LENGTH_SHORT).show()
+                        }
+                } else {
+                    val initialData = mapOf(
+                        "entries" to mapOf(userId to betEntry)
+                    )
+                    firestore.collection("bets").document(selectedSlot)
+                        .set(initialData)
+                        .addOnSuccessListener {
+                            Toast.makeText(this, "Bet placed successfully!", Toast.LENGTH_SHORT).show()
+                            bets.add(Pair(selectedNumber!!, betAmount))
+                            betsAdapter.notifyDataSetChanged()
+                        }
+                        .addOnFailureListener {
+                            Toast.makeText(this, "Failed to place bet.", Toast.LENGTH_SHORT).show()
+                        }
+                }
+            }
+            .addOnFailureListener {
+                Toast.makeText(this, "Error accessing Firestore.", Toast.LENGTH_SHORT).show()
+            }
+
+    }
+
+    private fun placeBet(userId: String, betAmount: Int) {
         firestore.collection("users").document(userId).get().addOnSuccessListener { document ->
             val currentCoins = document.getLong("coins")?.toInt() ?: 0
 
@@ -173,30 +233,51 @@ class P_PlaceBet : AppCompatActivity() {
                 return@addOnSuccessListener
             }
 
-            // Deduct coins and place bet
             val newBalance = currentCoins - betAmount
-            firestore.collection("users").document(userId).update("coins", newBalance)
-
-            // Update the displayed balance
-            tvCoinBalance.text = "Available Coins: $newBalance"
-
             val betEntry = mapOf(
-                "userId" to userId,
                 "choice" to selectedNumber!!,
-                "amount" to betAmount
+                "amount" to betAmount,
+                "timestamp" to System.currentTimeMillis()
             )
 
-            firestore.collection("bets").document("currentRound")
-                .update("entries.${UUID.randomUUID()}", betEntry)
+            // Update coins only if bet update is successful
+            firestore.collection("bets").document(selectedSlot)
+                .update("entries.$userId", betEntry)
                 .addOnSuccessListener {
-                    // Update UI
+                    firestore.collection("users").document(userId).update("coins", newBalance)
+                    tvCoinBalance.text = "Available Coins: $newBalance"
                     Toast.makeText(this, "Bet placed successfully!", Toast.LENGTH_SHORT).show()
+                    bets.add(Pair(selectedNumber!!, betAmount))
+                    betsAdapter.notifyDataSetChanged()
                 }
                 .addOnFailureListener {
                     Toast.makeText(this, "Failed to place bet.", Toast.LENGTH_SHORT).show()
                 }
         }
     }
+
+
+
+    fun getTimeSlot(currentTime: LocalTime = LocalTime.now()): TimeSlot? {
+        return when {
+            // 9 AM to 12 PM or 12 PM to 1 PM → SLOT_1 or RESULT_1
+            currentTime.isAfter(LocalTime.of(8, 59)) && currentTime.isBefore(LocalTime.of(12, 0)) -> TimeSlot.SLOT_1
+            currentTime.isAfter(LocalTime.of(11, 59)) && currentTime.isBefore(LocalTime.of(13, 0)) -> TimeSlot.RESULT_1
+
+            // 1 PM to 3 PM or 3 PM to 4 PM → SLOT_2 or RESULT_2
+            currentTime.isAfter(LocalTime.of(12, 59)) && currentTime.isBefore(LocalTime.of(15, 0)) -> TimeSlot.SLOT_2
+            currentTime.isAfter(LocalTime.of(14, 59)) && currentTime.isBefore(LocalTime.of(16, 0)) -> TimeSlot.RESULT_2
+
+            // 4 PM to 5 PM or 5 PM to 6 PM → SLOT_3 or RESULT_3
+            currentTime.isAfter(LocalTime.of(15, 59)) && currentTime.isBefore(LocalTime.of(17, 0)) -> TimeSlot.SLOT_3
+            currentTime.isAfter(LocalTime.of(16, 59)) && currentTime.isBefore(LocalTime.of(18, 0)) -> TimeSlot.RESULT_3
+
+            else -> null
+        }
+    }
+
+
+
 
     private fun scheduleHourlyNotifications() {
         val alarmManager = getSystemService(Context.ALARM_SERVICE) as AlarmManager
@@ -248,4 +329,10 @@ class NotificationReceiver : BroadcastReceiver() {
 
         notificationManager.notify(1, notification)
     }
+}
+
+enum class TimeSlot {
+    SLOT_1, RESULT_1,
+    SLOT_2, RESULT_2,
+    SLOT_3, RESULT_3
 }

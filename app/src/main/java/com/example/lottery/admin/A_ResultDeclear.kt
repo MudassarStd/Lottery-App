@@ -1,20 +1,10 @@
 package com.example.lottery.admin
 
 import android.os.Bundle
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Spinner
-import android.widget.TextView
-import android.widget.Toast
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
-import com.example.lottery.data.FirebaseRepository
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 import kotlin.random.Random
 
 class A_ResultDeclear : AppCompatActivity() {
@@ -26,8 +16,7 @@ class A_ResultDeclear : AppCompatActivity() {
 
     private lateinit var firebaseDatabase: FirebaseDatabase
     private lateinit var betsRef: DatabaseReference
-
-    private val firebaseRepository = FirebaseRepository()
+    private lateinit var resultsRef: DatabaseReference
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +32,7 @@ class A_ResultDeclear : AppCompatActivity() {
         // Initialize Firebase
         firebaseDatabase = FirebaseDatabase.getInstance()
         betsRef = firebaseDatabase.getReference("bets")
+        resultsRef = firebaseDatabase.getReference("results")
 
         // Populate slot options
         val slots = listOf("Morning", "Afternoon", "Evening")
@@ -63,45 +53,44 @@ class A_ResultDeclear : AppCompatActivity() {
 
     private fun generateWinningNumber() {
         val selectedSlot = spinnerSlot.selectedItem.toString()
-        betsRef.orderByChild("slot").equalTo(selectedSlot)
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val betCounts = mutableMapOf<Int, Int>()
+        betsRef.child(selectedSlot).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val betCounts = mutableMapOf<Int, Int>()
 
-                    for (bet in snapshot.children) {
-                        val number = bet.child("number").value.toString().toInt()
-                        val amount = bet.child("amount").value.toString().toInt()
-                        betCounts[number] = betCounts.getOrDefault(number, 0) + amount
-                    }
-
-                    if (betCounts.isEmpty()) {
-                        Toast.makeText(this@A_ResultDeclear, "No bets found for this slot", Toast.LENGTH_SHORT).show()
-                        return
-                    }
-
-                    val winningNumber = calculateWinningNumber(betCounts)
-                    tvGeneratedNumber.text = "Generated Number: $winningNumber"
+                // Collect data for the selected slot
+                for (bet in snapshot.children) {
+                    val number = bet.child("number").value.toString().toIntOrNull() ?: continue
+                    val amount = bet.child("amount").value.toString().toIntOrNull() ?: continue
+                    betCounts[number] = betCounts.getOrDefault(number, 0) + amount
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-                    Toast.makeText(this@A_ResultDeclear, "Failed to retrieve bets", Toast.LENGTH_SHORT).show()
+                if (betCounts.isEmpty()) {
+                    Toast.makeText(this@A_ResultDeclear, "No bets found for this slot", Toast.LENGTH_SHORT).show()
+                    return
                 }
-            })
+
+                // Calculate the winning number and display it
+                val winningNumber = calculateWinningNumber(betCounts)
+                tvGeneratedNumber.text = "Generated Number: $winningNumber"
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(this@A_ResultDeclear, "Failed to retrieve bets: ${error.message}", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 
     private fun calculateWinningNumber(betCounts: Map<Int, Int>): Int {
-        // Filter out numbers with zero bets
-        val nonZeroBets = betCounts.filter { it.value > 0 }
+        // Filter bets with non-zero amounts
+        val validBets = betCounts.filter { it.value > 0 }
 
-        // If no numbers have bets, select a random number
-        if (nonZeroBets.isEmpty()) {
-            return Random.nextInt(0, 100)
+        return if (validBets.isNotEmpty()) {
+            // Choose the number with the least total bet amount
+            validBets.minByOrNull { it.value }?.key ?: Random.nextInt(0, 100)
+        } else {
+            // If no valid bets, generate a random number
+            Random.nextInt(0, 100)
         }
-
-        // Find the least betted number
-        val leastBettedNumber = nonZeroBets.minByOrNull { it.value }?.key ?: Random.nextInt(0, 100)
-
-        return leastBettedNumber
     }
 
     private fun publishResult() {
@@ -109,26 +98,26 @@ class A_ResultDeclear : AppCompatActivity() {
         val generatedNumber = tvGeneratedNumber.text.toString().split(":").last().trim()
         val manualNumber = etManualNumber.text.toString().trim()
 
-        val winningNumber = if (manualNumber.isNotEmpty()) manualNumber else generatedNumber
+        // Choose the number to publish (manual or generated)
+        val winningNumber = manualNumber.ifEmpty { generatedNumber }
         if (winningNumber.isEmpty()) {
             Toast.makeText(this, "Please generate or enter a winning number", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Prepare the result data to publish
+        // Prepare the result to publish
         val resultData = mapOf(
             "slot" to selectedSlot,
             "winningNumber" to winningNumber,
             "timestamp" to System.currentTimeMillis()
         )
 
-        // Use FirebaseRepository to add result
-        firebaseRepository.addResult(resultData) { success, error ->
-            if (success) {
-                Toast.makeText(this, "Result published successfully", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "Failed to publish result: $error", Toast.LENGTH_SHORT).show()
+        resultsRef.child(selectedSlot).setValue(resultData)
+            .addOnSuccessListener {
+                Toast.makeText(this, "Result published successfully for $selectedSlot", Toast.LENGTH_SHORT).show()
             }
-        }
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Failed to publish result: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }

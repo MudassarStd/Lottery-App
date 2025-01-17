@@ -5,17 +5,10 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import com.example.lottery.R
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 
 class A_ManageBets : AppCompatActivity() {
     private lateinit var lvBets: ListView
@@ -28,23 +21,30 @@ class A_ManageBets : AppCompatActivity() {
     private var selectedBetId: String? = null
     private val betsList = mutableListOf<String>()
     private val betIds = mutableListOf<String>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_amanage_bets)
+
+        // Initialize UI components
         lvBets = findViewById(R.id.lvBets)
         btnDeclareResult = findViewById(R.id.btnDeclareResult)
         btnResolveIssues = findViewById(R.id.btnResolveIssues)
 
+        // Initialize Firebase references
         firebaseDatabase = FirebaseDatabase.getInstance()
         betsRef = firebaseDatabase.getReference("bets")
 
+        // Load bets dynamically
         loadBets()
 
+        // Handle bet selection
         lvBets.setOnItemClickListener { _, _, position, _ ->
             selectedBetId = betIds[position]
             Toast.makeText(this, "Selected Bet: ${betsList[position]}", Toast.LENGTH_SHORT).show()
         }
 
+        // Declare result for the selected bet
         btnDeclareResult.setOnClickListener {
             if (selectedBetId == null) {
                 Toast.makeText(this, "Please select a bet first", Toast.LENGTH_SHORT).show()
@@ -53,6 +53,7 @@ class A_ManageBets : AppCompatActivity() {
             declareResult(selectedBetId!!)
         }
 
+        // Resolve issues for the selected bet
         btnResolveIssues.setOnClickListener {
             if (selectedBetId == null) {
                 Toast.makeText(this, "Please select a bet first", Toast.LENGTH_SHORT).show()
@@ -62,40 +63,58 @@ class A_ManageBets : AppCompatActivity() {
         }
     }
 
+    /**
+     * Load all bets dynamically from Firebase and update the ListView.
+     */
     private fun loadBets() {
-        betsRef.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                betsList.clear()
-                betIds.clear()
+        betsList.clear()
+        betIds.clear()
 
-                for (bet in snapshot.children) {
-                    val betInfo = bet.child("info").value.toString()
-                    betsList.add(betInfo)
-                    betIds.add(bet.key ?: "")
+        val slots = listOf("morning", "afternoon", "evening")
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, betsList)
+        lvBets.adapter = adapter
+
+        slots.forEach { slot ->
+            betsRef.child(slot).addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    for (bet in snapshot.children) {
+                        val betKey = bet.key ?: "Unknown"
+                        val amount = bet.child("amount").value ?: "N/A"
+                        val betId = "$slot|$betKey"
+
+                        betsList.add("Slot: $slot, User: $betKey, Amount: $amount")
+                        betIds.add(betId)
+                    }
+                    adapter.notifyDataSetChanged()
                 }
 
-                val adapter = ArrayAdapter(this@A_ManageBets, android.R.layout.simple_list_item_1, betsList)
-                lvBets.adapter = adapter
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@A_ManageBets, "Failed to load bets", Toast.LENGTH_SHORT).show()
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    Toast.makeText(this@A_ManageBets, "Failed to load bets: ${error.message}", Toast.LENGTH_SHORT).show()
+                }
+            })
+        }
     }
 
+    /**
+     * Declare a result for the selected bet.
+     */
     private fun declareResult(betId: String) {
-        betsRef.child(betId).addListenerForSingleValueEvent(object : ValueEventListener {
+        val slotAndId = betId.split("|")
+        if (slotAndId.size < 2) {
+            Toast.makeText(this, "Invalid bet ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val slot = slotAndId[0]
+        val userId = slotAndId[1]
+
+        betsRef.child(slot).child(userId).addListenerForSingleValueEvent(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 if (snapshot.exists()) {
-                    val resultNumber = (0..99).random()
-
-                    // Debug logging
-                    Toast.makeText(this@A_ManageBets, "Generated Result: $resultNumber", Toast.LENGTH_SHORT).show()
+                    val resultNumber = (0..99).random() // Generate a random result
 
                     val updates = mapOf(
                         "result" to resultNumber,
-                        "status" to "resolved" // Optional status update
+                        "status" to "resolved"
                     )
 
                     snapshot.ref.updateChildren(updates).addOnCompleteListener { task ->
@@ -111,17 +130,34 @@ class A_ManageBets : AppCompatActivity() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(this@A_ManageBets, "Failed to fetch bet details", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@A_ManageBets, "Failed to fetch bet details: ${error.message}", Toast.LENGTH_SHORT).show()
             }
         })
     }
 
+    /**
+     * Resolve issues for the selected bet manually.
+     */
     private fun resolveIssues(betId: String) {
+        val slotAndId = betId.split("|")
+        if (slotAndId.size < 2) {
+            Toast.makeText(this, "Invalid bet ID", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val slot = slotAndId[0]
+        val userId = slotAndId[1]
+
         AlertDialog.Builder(this)
             .setTitle("Resolve Bet Issues")
             .setMessage("Manual resolution required for Bet ID: $betId.")
             .setPositiveButton("Resolve") { _, _ ->
-                Toast.makeText(this, "Bet issue resolved", Toast.LENGTH_SHORT).show()
+                betsRef.child(slot).child(userId).child("status").setValue("resolved")
+                    .addOnSuccessListener {
+                        Toast.makeText(this, "Bet issue resolved successfully", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this, "Failed to resolve issue: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
             }
             .setNegativeButton("Cancel", null)
             .show()
