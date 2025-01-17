@@ -62,8 +62,8 @@ object NotificationUtils {
      * @param message The notification message.
      */
     fun sendFirebaseNotification(recipientId: String, message: String) {
-        // This method would require server-side integration with Firebase Cloud Messaging (FCM).
+        // This method would require server-side integration with Firebase Cloud Messaging (com.example.lottery.FCM).
         // Placeholder logic to show what needs to happen.
-        // Ideally, you would make a network call to your backend to send the FCM notification.
+        // Ideally, you would make a network call to your backend to send the com.example.lottery.FCM notification.
     }
 }

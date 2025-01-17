@@ -1,5 +1,7 @@
 package com.example.lottery.data
 
+import java.util.Date
+
 data class User(
     val userId: String = "",
     val username: String = "",
@@ -55,10 +57,10 @@ data class Refund(
 
 // Result model
 data class Result(
-    val resultId: String = "",
-    val winningNumber: Int = 0,
-    val timestamp: Long = System.currentTimeMillis(),
-    val slot: String = "" // Morning, Afternoon, or Evening
+    val winner: String,
+    val amountWon: Int,
+    val slot: String,
+    val date: String
 )
 
 // Notification model

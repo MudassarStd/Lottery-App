@@ -52,11 +52,14 @@ dependencies {
     implementation(libs.androidx.foundation.android)
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.androidx.runner)
+    implementation(libs.volley)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     // Firebase Core SDKs
     implementation (libs.firebase.auth.ktx)
+
+    implementation (libs.firebase.messaging)
 
     implementation (libs.firebase.database.ktx)
     implementation (libs.firebase.storage.ktx)
