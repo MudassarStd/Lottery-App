@@ -3,7 +3,9 @@ package com.example.lottery.utils
 import android.os.Build
 import androidx.annotation.RequiresApi
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import java.util.*
 
 
@@ -14,6 +16,13 @@ object DateTimeUtils {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
         val date = Date(timestamp)
         return dateFormat.format(date)
+    }
+
+    fun getCurrentDateInLocalFormat(): String {
+        val currentDate = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.getDefault())
+
+        return currentDate.format(formatter)
     }
 
 

@@ -1,5 +1,10 @@
 package com.example.lottery.data.model
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.example.lottery.data.Result
+import com.example.lottery.utils.DateTimeUtils.getCurrentDateInLocalFormat
+
 data class Bet(
     val userId: String ,
     val choice: String,
@@ -14,5 +19,6 @@ data class Bet(
         amount = 0,
         timestamp = System.currentTimeMillis()
     )
+
 }
 

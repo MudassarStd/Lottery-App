@@ -2,6 +2,7 @@ package com.example.lottery.admin
 
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.ListView
@@ -10,6 +11,7 @@ import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
 import com.example.lottery.data.FirebaseRepository
+import com.example.lottery.data.Result
 import com.example.lottery.data.model.Bet
 import com.example.lottery.databinding.ActivityAmanageBetsBinding
 import com.example.lottery.utils.BetResultAlgorithm.determineBetResult
@@ -20,8 +22,10 @@ import com.example.lottery.utils.Constants.STATUS_PENDING
 import com.example.lottery.utils.Constants.STATUS_REJECTED
 import com.example.lottery.utils.Constants.USERS_PATH
 import com.example.lottery.utils.DateTimeUtils.getCurrentBetTimeSlot
+import com.example.lottery.utils.DateTimeUtils.getCurrentDateInLocalFormat
 import com.example.lottery.utils.Extensions.hide
 import com.example.lottery.utils.Extensions.show
+import com.example.lottery.utils.Extensions.toResult
 import com.google.firebase.firestore.FirebaseFirestore
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -91,33 +95,46 @@ class A_ManageBets : AppCompatActivity() {
         val resultsCollection = firestore.collection(RESULTS_PATH)
         val userDoc = firestore.collection(USERS_PATH).document(winningBet.userId)
 
-        firestore.runTransaction { transaction ->
-            // Get all bets for the given slot using a query
-            val betsQuerySnapshot = betsCollection.whereEqualTo("slot", slot).get().result
-                ?: throw Exception("Failed to fetch bets for slot: $slot")
+        // Step 1: Fetch necessary data outside the transaction
+        betsCollection.whereEqualTo("slot", slot).get()
+            .addOnSuccessListener { betsQuerySnapshot ->
+                userDoc.get()
+                    .addOnSuccessListener { userSnapshot ->
+                        // Step 2: Perform the transaction with pre-fetched data
+                        firestore.runTransaction { transaction ->
+                            // Delete all bets for this slot
+                            for (betDoc in betsQuerySnapshot.documents) {
+                                transaction.delete(betDoc.reference)
+                            }
 
-            // Delete all bets for this slot
-            for (betDoc in betsQuerySnapshot.documents) {
-                transaction.delete(betDoc.reference)
+                            // Add the winning bet to the results collection
+                            transaction.set(resultsCollection.document(), winningBet.toResult())
+
+                            // Update the winner's coin balance
+                            val currentCoins = userSnapshot.getLong("coins") ?: 0L
+                            val winningAmount = winningBet.choice.toInt() * 50
+                            transaction.update(userDoc, "coins", currentCoins + winningAmount)
+                        }.addOnSuccessListener {
+                            showToast("Results updated successfully")
+                            loadBets(slot) // Moved outside the transaction
+
+                            // ------------- Send FCM Notification to all users of result declaration ---------------
+                            // send winning notification to winningBet.userId.getFCMToken()
+
+
+
+                        }.addOnFailureListener { exception ->
+                            showToast("Error updating results: ${exception.message}")
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        showToast("Error fetching user data: ${exception.message}")
+                    }
             }
-            // Add the winning bet to the results collection
-            transaction.set(resultsCollection.document(), winningBet)
-
-            // Update the winner's coin balance
-            val userSnapshot = transaction.get(userDoc)
-            val currentCoins = userSnapshot.getLong("coins") ?: 0L
-            val winningAmount = winningBet.choice.toInt() * 50
-            transaction.update(userDoc, "coins", currentCoins + winningAmount)
-
-            loadBets(slot)
-
-        }.addOnSuccessListener {
-            showToast("Results updated successfully")
-        }.addOnFailureListener { exception ->
-            showToast("Error updating results: ${exception.message}")
-        }
+            .addOnFailureListener { exception ->
+                showToast("Error fetching bets: ${exception.message}")
+            }
     }
-
 
 
 
@@ -163,4 +180,5 @@ class A_ManageBets : AppCompatActivity() {
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
+
 }

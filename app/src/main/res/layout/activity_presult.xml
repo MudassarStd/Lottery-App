@@ -8,6 +8,7 @@
     android:padding="20dp"
     tools:context=".player.P_Result">
 
+
     <!-- Screen Title -->
     <TextView
         android:layout_width="wrap_content"
@@ -16,6 +17,33 @@
         android:textSize="24sp"
         android:layout_gravity="center"
         android:paddingBottom="16dp" />
+    <RadioGroup
+        android:id="@+id/rbGroupRequests"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbMorning"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="Morning"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbNoon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Afternoon"/>
+
+        <com.google.android.material.radiobutton.MaterialRadioButton
+            android:id="@+id/rbEvening"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Evening"/>
+
+    </RadioGroup>
 
     <!-- Result List Header -->
     <TextView

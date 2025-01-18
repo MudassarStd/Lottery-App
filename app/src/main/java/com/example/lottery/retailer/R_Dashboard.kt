@@ -6,6 +6,8 @@ import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
+import com.example.lottery.player.P_PlaceBet
+import com.example.lottery.player.P_Result
 
 class R_Dashboard : AppCompatActivity() {
     private lateinit var btnManagePlayers: LinearLayout
@@ -17,6 +19,7 @@ class R_Dashboard : AppCompatActivity() {
     private lateinit var btnNotifications: LinearLayout
     private lateinit var btnLogout: LinearLayout
     private lateinit var btnPlayLogin: LinearLayout // New button
+    private lateinit var btnPlaceBetRetailer: LinearLayout // New button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,6 +36,7 @@ class R_Dashboard : AppCompatActivity() {
         btnNotifications = findViewById(R.id.btnNotifications)
         btnLogout = findViewById(R.id.btnLogout)
         btnPlayLogin = findViewById(R.id.btnPlayLogin) // Initialize new button
+        btnPlaceBetRetailer = findViewById(R.id.btnPlaceBetRetailer) // Initialize new button
 
         // Set up click listeners
         btnManagePlayers.setOnClickListener {
@@ -48,7 +52,7 @@ class R_Dashboard : AppCompatActivity() {
         }
 
         btnViewResults.setOnClickListener {
-            startActivity(Intent(this, R_Result::class.java))
+            startActivity(Intent(this, P_Result::class.java))
         }
 
         btnRefundRequests.setOnClickListener {
@@ -69,6 +73,10 @@ class R_Dashboard : AppCompatActivity() {
 
         btnPlayLogin.setOnClickListener {
             startActivity(Intent(this, R_play_login::class.java)) // Navigate to R_Play_Login
+        }
+
+        btnPlaceBetRetailer.setOnClickListener {
+            startActivity(Intent(this, P_PlaceBet::class.java)) // Navigate to R_Play_Login
         }
     }
 }

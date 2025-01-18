@@ -1,61 +1,43 @@
 package com.example.lottery.player
 
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import com.example.lottery.R
+import com.example.lottery.data.FirebaseRepository
+import com.example.lottery.databinding.ActivityPresultBinding
 import com.example.lottery.utils.FirebaseHelper
 import com.example.lottery.utils.ResultUtils
 
+@RequiresApi(Build.VERSION_CODES.O)
 class P_Result : AppCompatActivity() {
-    private lateinit var lvResults: ListView
-    private lateinit var tvResultHeader: TextView
 
-    private val firebaseHelper = FirebaseHelper() // Firebase helper class to fetch results
+    private val binding by lazy { ActivityPresultBinding.inflate(layoutInflater) }
+    private val firebaseRepository by lazy { FirebaseRepository() }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_presult)
-
-        // Initialize UI components
-        lvResults = findViewById(R.id.lvResults)
-        tvResultHeader = findViewById(R.id.tvResultHeader)
-
+        setContentView(binding.root)
         // Load results from Firebase
         loadResults()
     }
 
     private fun loadResults() {
-        firebaseHelper.getResults { results, error ->
-            if (error != null) {
-                Toast.makeText(this@P_Result, "Failed to load results: $error", Toast.LENGTH_SHORT).show()
-                return@getResults
-            }
-
-            if (results != null) {
-                val resultsList = mutableListOf<String>()
-
-                for (result in results) {
-                    val slot = result["slot"].toString()
-                    val winningNumber = result["winningNumber"].toString().toIntOrNull()
-                    val timestamp = result["timestamp"].toString()
-
-                    // Validate the winning number before adding to the list
-                    if (winningNumber != null && ResultUtils.validateResult(winningNumber)) {
-                        val formattedResult = ResultUtils.formatResult(winningNumber)
-                        resultsList.add("Slot: $slot\n$formattedResult\nDate: $timestamp")
+                firebaseRepository.getResults("afternoon", callback = {responce, results, error ->
+                    if (responce) {
+                        Log.d("TestResultLoad", "Results: $results")
                     } else {
-                        resultsList.add("Slot: $slot\nWinning Number: Invalid\nDate: $timestamp")
+                        Log.e("TestResultLoad", "Result failed to get here, $error")
                     }
-                }
-
-                // Populate the ListView with results
-                val adapter = ArrayAdapter(this@P_Result, android.R.layout.simple_list_item_1, resultsList)
-                lvResults.adapter = adapter
-            }
-        }
+                })
+//        val adapter = ArrayAdapter(this@P_Result, android.R.layout.simple_list_item_1)
+//        binding.lvResults.adapter = adapter
     }
 }

@@ -1,10 +1,16 @@
 package com.example.lottery.data
 
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
+import com.example.lottery.data.model.Bet
 import com.example.lottery.utils.Constants.ACTIVE_BETS_PATH
+import com.example.lottery.utils.Constants.RESULTS_PATH
 import com.example.lottery.utils.Constants.TRANSACTIONS_PATH
 import com.example.lottery.utils.Constants.USERS_PATH
+import com.example.lottery.utils.Constants.USER_BET_HISTORY_PATH
+import com.example.lottery.utils.DateTimeUtils.getCurrentDateInLocalFormat
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
@@ -206,19 +212,39 @@ class FirebaseRepository {
 
 
     // Retrieve results from Firestore
-    fun getResults(callback: (List<Map<String, Any>>?, String?) -> Unit) {
-        database.child("results").get()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val results = task.result?.children?.map { snapshot ->
-                        snapshot.value as Map<String, Any>
-                    }
-                    callback(results, null)
-                } else {
-                    callback(null, task.exception?.message)
-                }
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun getResults(slot: String, callback: (response: Boolean, results: List<Result>, error: String?) -> Unit) {
+        db.collection(RESULTS_PATH)
+            .whereEqualTo("slot", slot)
+            .whereEqualTo("date", getCurrentDateInLocalFormat())
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val results = querySnapshot.toObjects(Result::class.java)
+                callback(true, results, null)
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirestoreError", "Failed to fetch results: ${exception.message}")
+                callback(false, emptyList(), "${exception.message}")
             }
     }
+
+    fun getUserBetHistory(callback: (response: Boolean, results: List<Bet>, error: String?) -> Unit) {
+        val uid = getCurrentUserId() ?: return callback(false, emptyList(), "User not logged in")
+
+        db.collection(USER_BET_HISTORY_PATH)
+            .document(uid)
+            .collection("bets")
+            .get()
+            .addOnSuccessListener { querySnapshot ->
+                val bets = querySnapshot.toObjects(Bet::class.java)
+                callback(true, bets, null)
+            }
+            .addOnFailureListener { exception ->
+                Log.e("FirestoreError", "Failed to fetch user bet history: ${exception.message}")
+                callback(false, emptyList(), exception.message)
+            }
+    }
+
 
     // Add result to Firestore
     fun addResult(resultData: Map<String, Any>, callback: (Boolean, String?) -> Unit) {

@@ -1,5 +1,6 @@
 package com.example.lottery.data
 
+import com.example.lottery.utils.DateTimeUtils.getCurrentDateInLocalFormat
 import java.util.Date
 
 data class User(
@@ -57,11 +58,18 @@ data class Refund(
 
 // Result model
 data class Result(
-    val winner: String,
-    val amountWon: Int,
-    val slot: String,
-    val date: String
-)
+    var winner: String,
+    var amountWon: Int,
+    var slot: String,
+    var date: String
+) {
+    constructor(): this (
+        winner = "",
+        amountWon = 0,
+        slot = "",
+        date = ""
+    )
+}
 
 // Notification model
 data class Notification(
