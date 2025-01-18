@@ -9,6 +9,7 @@ import android.widget.ListView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import com.example.firebaseadminandroid.FCMSender
 import com.example.lottery.R
 import com.example.lottery.data.FirebaseRepository
 import com.example.lottery.data.Result
@@ -43,6 +44,9 @@ class A_ManageBets : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(binding.root)
+
+
+        FCMSender.sendFCM(this)
 
         initializeUI()
         setupListeners()
